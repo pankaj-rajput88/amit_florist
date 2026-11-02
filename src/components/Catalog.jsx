@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { categories, products } from "../data/products";
 import ProductCard from "./ProductCard";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Catalog() {
   const [active, setActive] = useState("All");
@@ -22,7 +22,7 @@ export default function Catalog() {
     const controller = new AbortController();
     let activeRequest = true;
 
-    fetch(`${API}/api/products`, { signal: controller.signal })
+    fetch(`${API_URL}/api/products`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`Products request failed: ${r.status}`);
         return r.json();

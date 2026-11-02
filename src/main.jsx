@@ -6,7 +6,7 @@ import { AuthProvider } from "./AuthContext.jsx";
 import "./index.css";
 
 // /admin khulne par Admin page, warna normal website (login support ke saath)
-const isAdmin = window.location.pathname.startsWith("/admin");
+const isAdmin = /^\/admin\/?$/.test(window.location.pathname);
 
 createRoot(document.getElementById("root")).render(
   isAdmin ? <Admin /> : <AuthProvider><App /></AuthProvider>

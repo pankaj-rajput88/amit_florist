@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import AuthModal from "./components/AuthModal";
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const KEY = "florist_user_token";
 const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
