@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { categories } from "./data/products";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const cats = categories.filter((c) => c !== "All");
-const empty = { name: "", price: "", category: cats[0], desc: "", image: "", tag: "", inStock: true };
+const empty = { name: "", price: "", category: cats[0], desc: "", tag: "", inStock: true };
 
 export default function Admin() {
   const [token, setToken] = useState(localStorage.getItem("floristToken") || "");
   const [password, setPassword] = useState("");
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(empty);
+  const [file, setFile] = useState(null);
+  const fileInput = useRef(null);
   const [editId, setEditId] = useState(null); // None = naya bouquet, id = edit
   const [msg, setMsg] = useState("");
 
@@ -57,21 +59,46 @@ export default function Admin() {
     e.preventDefault();
     setMsg("");
     try {
-      await api(editId ? `/api/admin/products/${editId}` : "/api/admin/products", {
+      const data = new FormData();
+      data.append("name", form.name);
+      data.append("price", form.price);
+      data.append("category", form.category);
+      data.append("desc", form.desc);
+      data.append("tag", form.tag);
+      data.append("inStock", form.inStock);
+      if (file) data.append("image", file);
+
+      const res = await fetch(`${API}${editId ? `/api/admin/products/${editId}` : "/api/admin/products"}`, {
         method: editId ? "PUT" : "POST",
-        body: JSON.stringify(form),
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
       });
+      if (res.status === 401) { logout(); throw new Error("Session expired. Login again."); }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Something went wrong");
+
       setMsg(editId ? "Updated ✓" : "Added ✓");
       setForm(empty);
+      setFile(null);
+      if (fileInput.current) fileInput.current.value = "";
       setEditId(null);
       load();
     } catch (err) { setMsg(err.message); }
   };
 
   const edit = (p) => {
-    setForm({ name: p.name, price: p.price, category: p.category, desc: p.desc || "", image: p.image || "", tag: p.tag || "", inStock: p.inStock });
+    setForm({ name: p.name, price: p.price, category: p.category, desc: p.desc || "", tag: p.tag || "", inStock: p.inStock });
+    setFile(null);
+    if (fileInput.current) fileInput.current.value = "";
     setEditId(p._id);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setForm(empty);
+    setFile(null);
+    if (fileInput.current) fileInput.current.value = "";
+    setEditId(null);
   };
 
   const toggleStock = async (p) => {
@@ -113,7 +140,12 @@ export default function Admin() {
           {cats.map((c) => <option key={c}>{c}</option>)}
         </select>
         <textarea rows="3" placeholder="Description" value={form.desc} onChange={set("desc")} />
-        <input placeholder="Image link (abhi khali chhod sakte ho)" value={form.image} onChange={set("image")} />
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
         <select value={form.tag} onChange={set("tag")}>
           <option value="">No tag</option>
           <option>Latest</option>
@@ -122,7 +154,7 @@ export default function Admin() {
         <label className="check"><input type="checkbox" checked={form.inStock} onChange={set("inStock")} /> In stock</label>
         <div className="btn-row">
           <button className="btn primary" type="submit">{editId ? "Save changes" : "Add bouquet"}</button>
-          {editId && <button type="button" className="btn ghost" onClick={() => { setForm(empty); setEditId(null); }}>Cancel</button>}
+          {editId && <button type="button" className="btn ghost" onClick={cancelEdit}>Cancel</button>}
         </div>
         {msg && <p className="admin-msg">{msg}</p>}
       </form>
