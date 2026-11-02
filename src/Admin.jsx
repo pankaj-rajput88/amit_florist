@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { categories } from "./data/products";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const cats = categories.filter((c) => c !== "All");
 const empty = { name: "", price: "", category: cats[0], desc: "", tag: "", inStock: true };
 
@@ -19,7 +19,7 @@ export default function Admin() {
 
   // Token ke saath server ko request bhejne ka helper
   const api = async (path, opts = {}) => {
-    const res = await fetch(`${API}${path}`, {
+    const res = await fetch(`${API_URL}${path}`, {
       ...opts,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     });
@@ -30,7 +30,7 @@ export default function Admin() {
   };
 
   const load = () =>
-    fetch(`${API}/api/products`).then((r) => r.json()).then(setItems).catch(() => setMsg("Could not load"));
+    fetch(`${API_URL}/api/products`).then((r) => r.json()).then(setItems).catch(() => setMsg("Could not load"));
 
   useEffect(() => { if (token) load(); }, [token]);
 
@@ -38,7 +38,7 @@ export default function Admin() {
     e.preventDefault();
     setMsg("");
     try {
-      const res = await fetch(`${API}/api/admin/login`, {
+      const res = await fetch(`${API_URL}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
@@ -68,7 +68,7 @@ export default function Admin() {
       data.append("inStock", form.inStock);
       if (file) data.append("image", file);
 
-      const res = await fetch(`${API}${editId ? `/api/admin/products/${editId}` : "/api/admin/products"}`, {
+      const res = await fetch(`${API_URL}${editId ? `/api/admin/products/${editId}` : "/api/admin/products"}`, {
         method: editId ? "PUT" : "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: data,
